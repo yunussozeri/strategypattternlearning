@@ -10,13 +10,10 @@ public class StrategyModel {
     private final HelloController controller;
     private Strategy strategy;
     private List<Label> labelList;
-
-
-    public StrategyModel(HelloController controller){
+    private StrategyModel(HelloController controller){
         this(new NumberStrategy(),controller);
     }
-
-    public StrategyModel(Strategy strategy, HelloController controller){
+    private StrategyModel(Strategy strategy, HelloController controller){
         this.strategy = strategy;
         this.controller = controller;
 
@@ -35,7 +32,7 @@ public class StrategyModel {
 
     public void apply(boolean s1) {
         this.labelList = controller.getLabels();
-        strategy.show(labelList, s1);
+            strategy.show(labelList, s1);
         }
     }
 

@@ -1,44 +1,30 @@
 package pm2learn.patterns;
 
-import javafx.application.Application;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.text.TextFlow;
-import javafx.stage.Stage;
 
-import java.io.IOException;
+import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HelloController extends Application {
+public class HelloController   {
     public HelloController() {
         this.model = StrategyModel.getModel(this);
         this.labels = new ArrayList<>(6);
     }
 
-    @Override
-    public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("hello-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 500, 600);
 
-        stage.setTitle("Hello!");
-        stage.setScene(scene);
-        stage.show();
-    }
-
-    public static void main(String[] args) {
-        launch();
-    }
-
-    private StrategyModel model;
-    private List<Label> labels;
+    private final StrategyModel model;
+    private final List<Label> labels;
 
     public List<Label> getLabels() {
         return labels;
@@ -51,6 +37,8 @@ public class HelloController extends Application {
         labels.add(line2item1);
         labels.add(line2item2);
         labels.add(line2item3);
+
+
     }
 
     private void setup() {
@@ -59,10 +47,6 @@ public class HelloController extends Application {
         strategy3.addEventHandler(ActionEvent.ACTION, handler);
         addLabelsToList();
     }
-
-    @FXML
-    private TextFlow textFlow = new TextFlow();
-
     @FXML
     private Label activeStrategy = new Label();
     @FXML
@@ -93,13 +77,27 @@ public class HelloController extends Application {
 
     String actives = "Active Strategies: ";
 
-    private EventHandler<ActionEvent> handler = new EventHandler<ActionEvent>() {
+
+    private final EventHandler<ActionEvent> handler = new EventHandler<>() {
+
+        boolean selected;
+        private Runnable runner = new Runnable() {
+
+
+            @Override
+            public void run() {
+                startLabelChangeTimeline(selected);
+            }
+        };
         @Override
         public void handle(ActionEvent tick) {
+            Object obj = new Object();
+            obj.equals(this);
 
-
+            setup.setOnAction((event)-> System.out.println("Hallo"));
             String boxId = ((ToggleButton) tick.getSource()).getId();
             boolean selected = ((ToggleButton) tick.getSource()).selectedProperty().get();
+            this.selected = selected;
             System.out.println(boxId+ " is selected");
             switch (boxId) {
                 case "strategy1" -> firstSelected = selected;
@@ -112,22 +110,49 @@ public class HelloController extends Application {
                 case "strategy2" -> model.setStrategy(new NameStrategy());
                 case "strategy3" -> model.setStrategy(new CityStrategy());
             }
-            if(selected){
+            if (selected) {
                 addToActiveFiltersLabel(selected);
-            } else{
+                startLabelChangeTimeline(selected);
+                Platform.runLater(runner);
+            } else {
                 removeFromActiveFilters(!selected);
+                model.apply(selected);
+                stopLabelChangeTimeline();
             }
 
             activeStrategy.setText(actives);
-            List<ToggleButton> buttons = new ArrayList<>(3);
-            buttons.add(strategy1);
-            buttons.add(strategy2);
-            buttons.add(strategy3);
 
-            model.apply(selected);
+            //model.apply(selected);
         }
     };
 
+
+        private Timeline labelChangeTimeline;
+        private static final int LABEL_CHANGE_INTERVAL = 1000; // 5 seconds
+
+    private void startLabelChangeTimeline(boolean s) {
+        labelChangeTimeline = new Timeline(new KeyFrame(Duration.millis(LABEL_CHANGE_INTERVAL), event -> changeLabelContent(s)));
+        labelChangeTimeline.setCycleCount(5);
+        labelChangeTimeline.play();
+    }
+
+    private void stopLabelChangeTimeline() {
+        if (labelChangeTimeline != null) {
+            labelChangeTimeline.stop();
+            labelChangeTimeline = null;
+        }
+    }
+
+    private int labelChangeCount;
+
+    private void changeLabelContent(boolean selected) {
+        if (labelChangeCount < labels.size()) {
+            model.apply(selected);
+            labelChangeCount++;
+        } else {
+            labelChangeCount = 0;
+        }
+    }
     private void addToActiveFiltersLabel(boolean yes) {
         if (yes) {
             if (!actives.contains(model.getStrategyName())) {

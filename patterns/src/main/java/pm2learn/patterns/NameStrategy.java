@@ -1,5 +1,6 @@
 package pm2learn.patterns;
 
+import javafx.application.Platform;
 import javafx.scene.control.Label;
 
 import java.util.List;
@@ -20,6 +21,8 @@ public class NameStrategy implements Strategy {
                 }
             }
         }
+       
+
         System.out.println(" Name Strateji aktif");
         if (selected) {
             for (Label l : labels) {
